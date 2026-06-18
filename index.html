@@ -1,697 +1,1055 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>지쿱 제품 이미지 및 성분표, 링크오더 보관소</title>
-    <!-- 라이브러리 로드 -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
-        body { 
-            font-family: 'Noto Sans KR', sans-serif; 
-            -webkit-tap-highlight-color: transparent;
-            overscroll-behavior-y: contain;
-        }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-        .skeleton {
-            background: linear-gradient(90deg, #f1f5f9 25%, #f8fafc 50%, #f1f5f9 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-        }
-        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>지쿱 제품 이미지 및 성분표, 링크오더 보관소</title>
+  <style>
+    :root {
+      --bg:#f8fafc; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+      --primary:#4f46e5; --primary-dark:#3730a3; --primary-soft:#eef2ff;
+      --green:#10b981; --green-soft:#ecfdf5; --red:#f43f5e; --red-soft:#fff1f2;
+      --blue:#2563eb; --blue-soft:#eff6ff; --shadow:0 14px 35px rgba(15,23,42,.08);
+      --radius:24px;
+    }
+    * { box-sizing:border-box; }
+    html, body { margin:0; padding:0; min-height:100%; font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",Arial,sans-serif; background:var(--bg); color:var(--ink); -webkit-tap-highlight-color:transparent; }
+    body.modal-open { overflow:hidden; }
+    a { color:inherit; }
+    button, input { font-family:inherit; }
+    button { cursor:pointer; border:0; }
+    .app { min-height:100vh; padding-bottom:40px; }
+    .topbar { position:sticky; top:0; z-index:50; background:rgba(255,255,255,.92); backdrop-filter:blur(18px); border-bottom:1px solid var(--line); box-shadow:0 3px 18px rgba(15,23,42,.05); }
+    .top-inner { max-width:1180px; margin:0 auto; padding:14px 16px; display:flex; gap:12px; align-items:center; justify-content:space-between; }
+    .brand { display:flex; align-items:center; gap:10px; min-width:0; }
+    .logo { width:36px; height:36px; flex:0 0 36px; display:grid; place-items:center; color:white; background:linear-gradient(145deg,#6366f1,#4338ca); border-radius:14px; box-shadow:0 10px 22px rgba(79,70,229,.25); font-size:18px; }
+    .brand-title { margin:0; font-size:14px; font-weight:900; letter-spacing:-.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .brand-sub { margin:2px 0 0; color:var(--muted); font-size:10px; font-weight:700; }
+    .top-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    .pill { display:inline-flex; align-items:center; gap:6px; padding:8px 11px; border-radius:999px; text-decoration:none; font-size:11px; font-weight:900; white-space:nowrap; transition:.15s ease; }
+    .pill:active { transform:scale(.96); }
+    .pill-green { background:var(--green-soft); color:#047857; border:1px solid #bbf7d0; }
+    .pill-indigo { background:var(--primary-soft); color:var(--primary); border:1px solid #c7d2fe; }
+    .controls { position:sticky; top:65px; z-index:40; background:white; border-bottom:1px solid var(--line); box-shadow:0 6px 18px rgba(15,23,42,.04); }
+    .controls-inner { max-width:1180px; margin:0 auto; padding:12px 16px 10px; }
+    .search-wrap { position:relative; margin-bottom:10px; }
+    .search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:14px; }
+    .search { width:100%; padding:12px 42px; border-radius:18px; border:1px solid transparent; background:#f1f5f9; outline:none; font-size:13px; font-weight:700; transition:.15s; text-align:center; }
+    .search:focus { border-color:#c7d2fe; background:white; box-shadow:0 0 0 4px rgba(79,70,229,.08); }
+    .clear-btn { position:absolute; right:8px; top:50%; transform:translateY(-50%); width:30px; height:30px; border-radius:12px; background:#e2e8f0; color:#64748b; display:none; }
+    .clear-btn.show { display:grid; place-items:center; }
+    .tabs { display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
+    .tabs::-webkit-scrollbar { display:none; }
+    .tab { flex:0 0 auto; padding:9px 14px; border-radius:14px; border:1px solid #e2e8f0; background:#f8fafc; color:#64748b; font-size:11px; font-weight:900; transition:.15s; }
+    .tab.active { background:var(--primary); color:white; border-color:var(--primary); box-shadow:0 8px 20px rgba(79,70,229,.18); }
+    .main { max-width:1180px; margin:0 auto; padding:18px 16px 42px; }
+    .meta-line { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:0 0 14px; color:#64748b; font-size:12px; font-weight:800; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    @media (min-width:640px) { .grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+    @media (min-width:900px) { .grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+    @media (min-width:1120px) { .grid { grid-template-columns:repeat(5,minmax(0,1fr)); } }
+    .card { background:white; border:1px solid #eef2f7; border-radius:26px; overflow:hidden; box-shadow:0 3px 12px rgba(15,23,42,.035); transition:.18s ease; text-align:left; }
+    .card:hover { transform:translateY(-2px); box-shadow:var(--shadow); border-color:#c7d2fe; }
+    .card:active { transform:scale(.98); }
+    .thumb { aspect-ratio:1/1; position:relative; overflow:hidden; background:#f1f5f9; }
+    .thumb img { width:100%; height:100%; object-fit:cover; display:block; opacity:0; transform:scale(1.02); transition:opacity .35s ease, transform .45s ease; }
+    .thumb img.loaded { opacity:1; transform:scale(1); }
+    .missing { position:absolute; inset:0; display:grid; place-items:center; text-align:center; color:#94a3b8; font-size:11px; font-weight:900; background:#f1f5f9; }
+    .skeleton { position:absolute; inset:0; background:linear-gradient(90deg,#f1f5f9 25%,#f8fafc 50%,#f1f5f9 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; }
+    @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+    .card-body { padding:12px; }
+    .category { margin:0 0 5px; font-size:9px; color:var(--primary); font-weight:1000; letter-spacing:.08em; text-transform:uppercase; }
+    .card-title { margin:0; font-size:13px; line-height:1.25; font-weight:900; letter-spacing:-.03em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .card-desc { margin:7px 0 0; color:#64748b; font-size:11px; line-height:1.35; height:31px; overflow:hidden; }
+    .empty { padding:80px 20px; text-align:center; color:#94a3b8; font-weight:900; }
+    .custom-panel { max-width:720px; margin:0 auto; display:grid; gap:18px; }
+    .box { background:white; border:1px solid #eef2f7; border-radius:30px; padding:22px; box-shadow:0 10px 25px rgba(15,23,42,.04); }
+    .box-title { margin:0 0 14px; font-size:15px; font-weight:1000; letter-spacing:-.035em; display:flex; align-items:center; gap:8px; }
+    .form-grid { display:grid; gap:10px; }
+    .input { width:100%; border:1px solid #e2e8f0; background:#f8fafc; border-radius:16px; padding:13px 14px; outline:none; font-size:13px; font-weight:700; }
+    .input:focus { border-color:#c7d2fe; background:white; box-shadow:0 0 0 4px rgba(79,70,229,.08); }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; border-radius:15px; padding:11px 13px; font-size:11px; font-weight:1000; transition:.15s; text-decoration:none; }
+    .btn:active { transform:scale(.97); }
+    .btn-primary { color:white; background:var(--primary); box-shadow:0 10px 20px rgba(79,70,229,.16); }
+    .btn-primary:hover { background:var(--primary-dark); }
+    .btn-slate { color:#334155; background:#f1f5f9; border:1px solid #e2e8f0; }
+    .btn-blue { color:#1d4ed8; background:var(--blue-soft); border:1px solid #bfdbfe; }
+    .btn-red { color:#e11d48; background:var(--red-soft); border:1px solid #fecdd3; }
+    .btn-green { color:#047857; background:var(--green-soft); border:1px solid #bbf7d0; }
+    .custom-list { display:grid; gap:12px; }
+    .custom-item { background:white; border:1px solid #eef2f7; border-radius:24px; padding:16px; box-shadow:0 3px 12px rgba(15,23,42,.035); }
+    .custom-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+    .custom-name { margin:0; font-size:14px; font-weight:1000; }
+    .custom-url { margin:4px 0 0; color:#64748b; font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
+    .custom-actions { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:13px; padding-top:13px; border-top:1px solid #f1f5f9; }
+    .modal-backdrop { position:fixed; inset:0; z-index:100; background:rgba(15,23,42,.55); backdrop-filter:blur(8px); display:none; align-items:flex-end; justify-content:center; padding:0; }
+    .modal-backdrop.show { display:flex; }
+    .modal { width:100%; max-width:620px; height:92vh; background:white; border-radius:34px 34px 0 0; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 -20px 50px rgba(0,0,0,.22); animation:slideUp .22s ease; }
+    @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+    @media (min-width:680px) { .modal-backdrop { align-items:center; padding:18px; } .modal { height:auto; max-height:88vh; border-radius:38px; } }
+    .dragbar { width:48px; height:4px; border-radius:999px; background:#e2e8f0; margin:10px auto 0; flex:0 0 auto; }
+    @media (min-width:680px) { .dragbar { display:none; } }
+    .modal-head { padding:20px 22px 12px; border-bottom:1px solid #eef2f7; display:flex; gap:14px; justify-content:space-between; align-items:flex-start; flex:0 0 auto; }
+    .modal-label { display:inline-block; color:var(--primary); background:var(--primary-soft); border:1px solid #c7d2fe; border-radius:999px; padding:5px 9px; font-size:9px; font-weight:1000; letter-spacing:.06em; }
+    .modal-title { margin:9px 0 0; font-size:22px; font-weight:1000; letter-spacing:-.055em; line-height:1.12; }
+    .close { width:42px; height:42px; border-radius:16px; background:#f1f5f9; color:#64748b; flex:0 0 auto; font-size:20px; }
+    .modal-tabs { display:flex; gap:16px; overflow-x:auto; padding:0 22px; border-bottom:1px solid #eef2f7; flex:0 0 auto; scrollbar-width:none; }
+    .modal-tabs::-webkit-scrollbar { display:none; }
+    .modal-tab { padding:14px 0 13px; background:transparent; color:#94a3b8; border-bottom:3px solid transparent; font-size:13px; font-weight:1000; white-space:nowrap; }
+    .modal-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+    .modal-content { flex:1 1 auto; overflow:auto; padding:20px; background:#fbfdff; }
+    .image-grid { display:grid; grid-template-columns:1fr; gap:14px; }
+    @media (min-width:520px) { .image-grid { grid-template-columns:1fr 1fr; } }
+    .img-card { position:relative; border-radius:24px; overflow:hidden; border:1px solid #e2e8f0; background:white; box-shadow:0 7px 18px rgba(15,23,42,.06); }
+    .badge { position:absolute; top:12px; left:12px; background:rgba(15,23,42,.46); color:white; backdrop-filter:blur(8px); border-radius:999px; padding:5px 9px; font-size:9px; font-weight:1000; }
+    .download { position:absolute; right:12px; bottom:12px; width:42px; height:42px; border-radius:16px; background:rgba(255,255,255,.92); border:1px solid #e2e8f0; color:#334155; box-shadow:0 10px 18px rgba(15,23,42,.12); }
+    .info-card { background:white; border:1px solid #e2e8f0; border-radius:26px; padding:19px; margin-bottom:15px; box-shadow:0 6px 16px rgba(15,23,42,.04); }
+    .info-kicker { display:flex; align-items:center; gap:7px; margin:0 0 9px; color:var(--primary); font-size:10px; font-weight:1000; letter-spacing:.06em; text-transform:uppercase; }
+    .dot { width:5px; height:5px; border-radius:999px; background:currentColor; display:inline-block; }
+    .info-text { white-space:pre-wrap; margin:0; color:#334155; font-size:14px; line-height:1.65; font-weight:650; }
+    .ingredients { background:#f8fafc; border:1px solid #eef2f7; padding:13px; border-radius:16px; font-size:12.5px; line-height:1.65; color:#475569; white-space:pre-wrap; }
+    .links-note { padding:13px; border-radius:18px; background:var(--primary-soft); color:#4338ca; border:1px solid #c7d2fe; font-size:11px; font-weight:800; line-height:1.55; margin-bottom:14px; }
+    .mall-link { background:white; border:1px solid #c7d2fe; border-radius:22px; padding:15px; margin-bottom:12px; box-shadow:0 8px 16px rgba(79,70,229,.06); }
+    .mall-title { margin:0 0 9px; color:var(--primary); font-size:12px; font-weight:1000; }
+    .mall-url { display:block; color:#64748b; font-size:11px; line-height:1.45; word-break:break-all; margin-bottom:12px; text-decoration:underline; text-decoration-color:#cbd5e1; text-underline-offset:4px; }
+    .row-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .divider { height:1px; background:#e2e8f0; margin:16px 0; }
+    .link-item { background:white; border:1px solid #e2e8f0; border-radius:22px; padding:15px; margin-bottom:12px; }
+    .link-item-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+    .num { width:24px; height:24px; border-radius:999px; background:var(--primary); color:white; display:grid; place-items:center; font-size:10px; font-weight:1000; flex:0 0 auto; }
+    .link-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+    .link-actions .wide { grid-column:1/-1; }
+    .modal-foot { padding:13px; background:white; border-top:1px solid #eef2f7; text-align:center; color:#94a3b8; font-size:10px; font-weight:900; flex:0 0 auto; padding-bottom:max(13px,env(safe-area-inset-bottom)); }
+    .preview { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.95); display:none; align-items:center; justify-content:center; padding:18px; }
+    .preview.show { display:flex; }
+    .preview img { max-width:100%; max-height:80vh; object-fit:contain; border-radius:10px; box-shadow:0 20px 60px rgba(0,0,0,.45); }
+    .preview-close { position:absolute; top:22px; right:22px; width:48px; height:48px; color:white; background:rgba(255,255,255,.12); border-radius:999px; font-size:24px; }
+    .preview-save { position:absolute; bottom:28px; left:50%; transform:translateX(-50%); min-width:190px; }
+    .toast { position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(10px); z-index:300; background:rgba(15,23,42,.95); color:white; border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:13px 18px; box-shadow:0 18px 35px rgba(0,0,0,.22); opacity:0; pointer-events:none; transition:.18s; font-size:12px; font-weight:1000; white-space:nowrap; }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    @media (max-width:560px) {
+      .top-inner { flex-direction:column; align-items:flex-start; padding:12px 14px; }
+      .top-actions { width:100%; justify-content:flex-start; }
+      .controls { top:91px; }
+      .grid { gap:10px; }
+      .card { border-radius:22px; }
+      .card-body { padding:10px; }
+      .card-title { font-size:12px; }
+      .card-desc { display:none; }
+    }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
-    <div id="root"></div>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="top-inner">
+        <div class="brand">
+          <div class="logo">▦</div>
+          <div style="min-width:0">
+            <h1 class="brand-title">지쿱 제품 이미지 및 성분표, 링크오더 보관소</h1>
+            <p class="brand-sub">제품 이미지 · 성분표 · 개인 링크오더 관리 프롬프트북</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <a class="pill pill-green" href="https://vcshop.gcoop.com/kr" target="_blank" rel="noopener noreferrer">↗ 지쿱 쇼핑몰 바로가기</a>
+          <button class="pill pill-indigo" id="shareMallBtn" type="button">⤴ 쇼핑몰 주소 공유</button>
+        </div>
+      </div>
+    </header>
 
-    <script type="text/babel">
-        const { useState, useMemo, useRef, useEffect } = React;
+    <section class="controls">
+      <div class="controls-inner">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input id="searchInput" class="search" type="search" placeholder="제품명, 설명, 성분을 검색해 보세요..." autocomplete="off" />
+          <button id="clearSearchBtn" class="clear-btn" type="button" aria-label="검색어 지우기">×</button>
+        </div>
+        <div id="categoryTabs" class="tabs" aria-label="카테고리"></div>
+      </div>
+    </section>
 
-        // UI Components
-        const Icon = ({ name, size = 20, className = "" }) => {
-            useEffect(() => {
-                if (window.lucide) window.lucide.createIcons();
-            }, [name]);
-            return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
-        };
+    <main class="main">
+      <div id="mainMeta" class="meta-line"></div>
+      <div id="productGrid" class="grid"></div>
+      <section id="customPanel" class="custom-panel" style="display:none"></section>
+    </main>
+  </div>
 
-        const OptimizedImage = ({ src, alt, className, aspect = "aspect-square" }) => {
-            const [loaded, setLoaded] = useState(false);
-            const [error, setError] = useState(false);
+  <div id="productModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <article class="modal">
+      <div class="dragbar"></div>
+      <div class="modal-head">
+        <div>
+          <span id="modalCategory" class="modal-label"></span>
+          <h2 id="modalTitle" class="modal-title"></h2>
+        </div>
+        <button id="modalCloseBtn" class="close" type="button" aria-label="닫기">×</button>
+      </div>
+      <nav class="modal-tabs">
+        <button class="modal-tab active" data-modal-tab="images" type="button">▧ 이미지</button>
+        <button class="modal-tab" data-modal-tab="info" type="button">☰ 상세/성분</button>
+        <button class="modal-tab" data-modal-tab="links" type="button">🔗 내 링크오더</button>
+      </nav>
+      <div id="modalContent" class="modal-content"></div>
+      <footer class="modal-foot">© GCOOP Partner PRO HUB - 로컬 관리 도구</footer>
+    </article>
+  </div>
 
-            // 이미지 경로 자동 처리 로직 (images/ 폴더 자동 보정)
-            const imagePath = useMemo(() => {
-                if (!src) return "";
-                if (src.startsWith('http') || src.startsWith('blob:') || src.startsWith('data:') || src.startsWith('images/')) {
-                    return src;
-                }
-                return `images/${src}`;
-            }, [src]);
+  <div id="imagePreview" class="preview" aria-hidden="true">
+    <button id="previewCloseBtn" class="preview-close" type="button" aria-label="이미지 닫기">×</button>
+    <img id="previewImg" src="" alt="확대 이미지" />
+    <button id="previewSaveBtn" class="btn btn-primary preview-save" type="button">⬇ 이미지 원본 저장</button>
+  </div>
 
-            return (
-                <div className={`relative overflow-hidden ${aspect} ${className} bg-slate-100`}>
-                    {!loaded && !error && <div className="absolute inset-0 skeleton" />}
-                    <img 
-                        src={imagePath} 
-                        alt={alt}
-                        loading="lazy"
-                        decoding="async"
-                        className={`w-full h-full object-cover transition-all duration-700 ${loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
-                        onLoad={() => setLoaded(true)}
-                        onError={() => { setLoaded(true); setError(true); }}
-                    />
-                    {error && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-100 text-slate-400 text-[10px]">
-                            <Icon name="image-off" size={16} className="mb-1" />
-                            이미지 없음
-                        </div>
-                    )}
-                </div>
-            );
-        };
+  <div id="toast" class="toast"></div>
 
-        const LinkOrderItem = ({ num, data, productId, onSave, onDelete, onCopy, onShare }) => {
-            const [name, setName] = useState(data?.name || "");
-            const [url, setUrl] = useState(data?.url || "");
-
-            useEffect(() => {
-                setName(data?.name || "");
-                setUrl(data?.url || "");
-            }, [data]);
-
-            const hasData = !!data?.url;
-
-            return (
-                <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-indigo-200 transition-colors">
-                    <div className="flex flex-col gap-3">
-                        <div className="flex items-center gap-2">
-                            <div className="bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shadow-sm">{num}</div>
-                            <input 
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder={`링크 ${num} 이름`}
-                                disabled={hasData}
-                                className={`bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-100 w-full ${hasData ? 'text-slate-400 cursor-not-allowed' : 'text-slate-700'}`}
-                            />
-                        </div>
-                        <input 
-                            type="text" 
-                            value={url}
-                            onChange={(e) => setUrl(e.target.value)}
-                            placeholder="마케팅 URL (https://...)"
-                            disabled={hasData}
-                            className={`bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-100 transition-all ${hasData ? 'text-slate-400 cursor-not-allowed' : 'text-slate-600'}`}
-                        />
-                        
-                        <div className="grid grid-cols-2 gap-2 mt-1">
-                            {!hasData ? (
-                                <button 
-                                    onClick={() => onSave(productId, num, name || `링크 ${num}`, url)}
-                                    disabled={!url}
-                                    className={`col-span-2 py-2.5 rounded-xl text-[10px] font-black flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
-                                        !url ? 'bg-slate-100 text-slate-400' : 'bg-indigo-600 text-white shadow-lg shadow-indigo-100'
-                                    }`}
-                                >
-                                    <Icon name="plus-circle" size={12} /> 새 링크 등록하기
-                                </button>
-                            ) : (
-                                <>
-                                    <a 
-                                        href={url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="col-span-2 bg-indigo-600 text-white py-2.5 rounded-xl text-[10px] font-black flex items-center justify-center gap-1.5 active:scale-95 shadow-lg shadow-indigo-100"
-                                    >
-                                        <Icon name="external-link" size={12} /> 링크로 이동 (클릭)
-                                    </a>
-                                    <button 
-                                        onClick={() => onCopy(url, name)}
-                                        className="bg-white border border-slate-200 text-slate-700 py-2.5 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1.5 active:scale-95"
-                                    >
-                                        <Icon name="copy" size={12} /> 복사
-                                    </button>
-                                    <button 
-                                        onClick={() => onShare(name, url)}
-                                        className="bg-blue-50 border border-blue-100 text-blue-600 py-2.5 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1.5 active:scale-95"
-                                    >
-                                        <Icon name="share" size={12} /> 공유
-                                    </button>
-                                    <button 
-                                        onClick={() => onDelete(productId, num)}
-                                        className="col-span-2 bg-rose-50 border border-rose-100 text-rose-500 py-2.5 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1.5 active:scale-95 mt-1"
-                                    >
-                                        <Icon name="trash-2" size={12} /> 링크 삭제 및 재등록
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const LinkOrderTab = ({ product, personalLinks, onSave, onDelete, onCopy, onShare }) => {
-            const mallLinks = Array.isArray(product.mallUrl) ? product.mallUrl : (product.mallUrl ? [{ label: "쇼핑몰 상세페이지", url: product.mallUrl }] : []);
-            
-            return (
-                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 mb-2">
-                        <p className="text-[10px] text-indigo-700 leading-relaxed font-medium">
-                            <Icon name="info" size={10} className="inline mr-1 mb-0.5" />
-                            파트너님의 마이오피스 링크나 블로그 주소를 등록해 보세요. <br/>
-                            한 번 등록된 링크는 삭제 후 다시 등록할 수 있습니다.
-                        </p>
-                    </div>
-
-                    {mallLinks.map((link, idx) => (
-                        <div key={idx} className="bg-white border border-indigo-100 rounded-2xl p-4 shadow-md ring-2 ring-indigo-50 ring-opacity-50 mb-2">
-                            <div className="flex items-center justify-between mb-2">
-                                <h4 className="text-[11px] font-black text-indigo-600 flex items-center gap-1.5 italic">
-                                    <Icon name="shopping-bag" size={12} /> {link.label} (클릭시이동)
-                                </h4>
-                            </div>
-                            <a 
-                                href={link.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-[10px] text-slate-500 hover:text-indigo-600 transition-colors break-all underline decoration-slate-200 underline-offset-4 mb-4 block leading-snug"
-                            >
-                                {link.url}
-                            </a>
-                            <div className="flex gap-2">
-                                <button 
-                                    onClick={() => onCopy(link.url, link.label)}
-                                    className="flex-1 bg-white border border-slate-200 text-slate-700 py-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1.5 active:scale-95 hover:bg-slate-50"
-                                >
-                                    <Icon name="copy" size={12} /> 복사하기
-                                </button>
-                                <button 
-                                    onClick={() => onShare(link.label, link.url)}
-                                    className="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1.5 active:scale-95 shadow-lg shadow-indigo-100"
-                                >
-                                    <Icon name="share-2" size={12} /> 공유하기
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-
-                    {mallLinks.length > 0 && <div className="h-px bg-slate-100 my-4 w-full"></div>}
-
-                    {[1, 2, 3, 4].map((num) => (
-                        <LinkOrderItem 
-                            key={num}
-                            num={num}
-                            productId={product.id}
-                            data={personalLinks?.[`link${num}`]}
-                            onSave={onSave}
-                            onDelete={onDelete}
-                            onCopy={onCopy}
-                            onShare={onShare}
-                        />
-                    ))}
-                </div>
-            );
-        };
-
-        const CustomLinkManager = ({ customLinks, onAdd, onDelete, onCopy, onShare, showToast }) => {
-            const [newName, setNewName] = useState("");
-            const [newUrl, setNewUrl] = useState("");
-
-            const handleAdd = () => {
-                if (!newName || !newUrl) {
-                    showToast("이름과 URL을 모두 입력해 주세요.");
-                    return;
-                }
-                onAdd(newName, newUrl);
-                setNewName("");
-                setNewUrl("");
-            };
-
-            return (
-                <div className="space-y-6 animate-in fade-in duration-500 max-w-2xl mx-auto">
-                    <div className="bg-white border border-indigo-100 rounded-[2rem] p-6 shadow-xl shadow-indigo-50/50">
-                        <h3 className="text-sm font-black text-slate-800 mb-4 flex items-center gap-2">
-                            <Icon name="plus-circle" size={18} className="text-indigo-600" /> 새 커스텀 링크 등록
-                        </h3>
-                        <div className="space-y-3">
-                            <input 
-                                type="text" 
-                                placeholder="링크 이름 (예: 내 블로그, 상담 오픈톡)"
-                                value={newName}
-                                onChange={(e) => setNewName(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-100"
-                            />
-                            <input 
-                                type="text" 
-                                placeholder="URL (https://...)"
-                                value={newUrl}
-                                onChange={(e) => setNewUrl(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-indigo-100"
-                            />
-                            <button 
-                                onClick={handleAdd}
-                                className="w-full bg-indigo-600 text-white py-3.5 rounded-xl text-xs font-black shadow-lg shadow-indigo-100 active:scale-95 transition-all flex items-center justify-center gap-2"
-                            >
-                                <Icon name="save" size={14} /> 링크 추가하기
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="grid gap-4">
-                        {customLinks.length === 0 ? (
-                            <div className="py-20 text-center text-slate-400">
-                                <Icon name="link-2" size={40} className="mx-auto mb-3 opacity-20" />
-                                <p className="text-xs font-medium">등록된 링크가 없습니다.<br/>위에서 새로운 링크를 등록해 보세요.</p>
-                            </div>
-                        ) : (
-                            customLinks.map(link => (
-                                <div key={link.id} className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                                    <div>
-                                        <div className="flex items-center justify-between mb-3">
-                                            <div>
-                                                <h4 className="text-xs font-black text-slate-800">{link.name}</h4>
-                                                <p className="text-[10px] text-slate-400 truncate max-w-[200px] mt-0.5">{link.url}</p>
-                                            </div>
-                                            <button onClick={() => onDelete(link.id)} className="p-2 text-rose-400 hover:text-rose-600 transition-colors" title="삭제"><Icon name="trash-2" size={18}/></button>
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-50">
-                                            <a 
-                                                href={link.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="bg-indigo-600 text-white py-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1.5 active:scale-95 shadow-md shadow-indigo-50"
-                                            >
-                                                <Icon name="external-link" size={12} /> 이동
-                                            </a>
-                                            <button 
-                                                onClick={() => onCopy(link.url, link.name)}
-                                                className="bg-slate-50 text-slate-600 py-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1.5 active:scale-95"
-                                            >
-                                                <Icon name="copy" size={12} /> 복사
-                                            </button>
-                                            <button 
-                                                onClick={() => onShare(link.name, link.url)}
-                                                className="bg-blue-50 text-blue-600 py-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1.5 active:scale-95"
-                                            >
-                                                <Icon name="share-2" size={12} /> 공유
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-            );
-        };
-
-        const CATEGORIES = ["전체보기", "케어셀라 뷰티", "텔로메라화장품", "컬러오리진염색약", "리빙", "바이오케이", "기타링크"];
-
-        const PRODUCTS = [
-            // --- 텔로메라화장품 ---
-            { 
-                id: 46, category: "텔로메라화장품", title: "텔로메라 크림", 
-                mallUrl: "https://vcshop.gcoop.com/kr/display?cate=290&itemNo=5944", 
-                content: "[상품설명]\n피부 시간을 되돌리는 리와인드 크림입니다. 고농축 영양 성분이 피부에 밀착되어 무너진 피부 장벽을 탄탄하게 강화하고 은은한 광채를 선사하는 프리미엄 안티에이징 크림입니다.\n\n[사용방법]\n스킨케어 마지막 단계에서 적당량을 취해 얼굴 전체와 목에 부드럽게 펴 발라 흡수시켜 줍니다.", 
-                ingredients: "[전성분]\n정제수, 글리세린, 부틸렌글라이콜, 카프릴릭/카프릭트라이글리세라이드, 시어버터, 나이아신아마이드, 판테놀, 진세노사이드, 아데노신, 하이드롤라이즈드콜라겐, 식물 유래 줄기세포 배양액 등 상세 정보 이미지 참조", 
-                images: ["텔로메라크림1.jpg", "텔로메라크림2.jpg", "텔로메라크림3.jpg", "텔로메라크림4.jpg"] 
-            },
-            { 
-                id: 45, category: "텔로메라화장품", title: "텔로메라 세럼", 
-                mallUrl: "https://vcshop.gcoop.com/kr/display?cate=290&itemNo=5941", 
-                content: "[상품설명]\n피부 자생력을 높여주는 텔로메라 루틴의 핵심 세럼입니다. 풍부한 영양 에너지를 피부 깊숙이 전달하여 탄력 있는 피부결과 맑은 피부톤으로 가꾸어 줍니다.\n\n[사용방법]\n부스터 사용 후 적당량을 펌핑하여 얼굴 전체에 골고루 펴 바르고 가볍게 두드려 흡수시킵니다.", 
-                ingredients: "[전성분]\n정제수, 글리세린, 부틸렌글라이콜, 나이아신아마이드, 프로판다이올, 1,2-헥산다이올, 베타인, 세틸에틸헥사노에이트, 스쿠알란, 삼줄기추출물, 삼뿌리추출물, 폴리아크릴레이트크로스폴리머-6, 알란토인, 하이드로제네이티드레시틴 등", 
-                images: ["텔로메라세럼1.jpg", "텔로메라세럼2.jpg", "텔로메라세럼3.jpg", "텔로메라세럼4.jpg"] 
-            },
-            { 
-                id: 44, category: "텔로메라화장품", title: "텔로메라 부스터", 
-                mallUrl: "https://vcshop.gcoop.com/kr/display?cate=290&itemNo=5943", 
-                content: "[상품설명]\n세안 후 피부 시간을 깨우는 첫 단계 리셋 부스터입니다. 다음 단계 제품의 흡수를 돕는 피부 바탕을 만들어주며 즉각적인 수분과 생기를 부여합니다.\n\n[사용방법]\n세안 직후 적당량을 분사하거나 화장솜에 적셔 피부 결을 따라 가볍게 닦아낸 후 흡수시켜 줍니다.", 
-                ingredients: "[전성분]\n정제수, 부틸렌글라이콜, 나이아신아마이드, 판테놀, 진세노사이드, 아데노신, 하이드롤라이즈드콜라겐 등 상세 정보 이미지 참조", 
-                images: ["텔로메라부스터1.jpg", "텔로메라부스터2.jpg", "텔로메라부스터3.jpg", "텔로메라부스터4.jpg"] 
-            },
-            { 
-                id: 43, category: "텔로메라화장품", title: "텔로메라 3종 세트", 
-                mallUrl: [{ label: "텔로메라 3종(3ml) 파우치 세트", url: "https://vcshop.gcoop.com/kr/display?cate=290&itemNo=5983" }, { label: "텔로메라 3종 화장품 세트", url: "https://vcshop.gcoop.com/kr/display?cate=290&itemNo=5964" }], 
-                content: "[세트 구성]\n1. 텔로메라 부스터 (120ml / 3ml)\n2. 텔로메라 세럼 (50ml / 3ml)\n3. 텔로메라 크림 (50g / 3g)\n\n[사용방법]\n부스터 -> 세럼 -> 크림 순서로 적당량을 취해 피부에 골고루 펴 바릅니다.", 
-                ingredients: "상세 전성분은 제품별 개별 상세 정보 이미지를 참조해 주세요.", 
-                images: ["텔로메라파우치1.jpg", "텔로메라파우치2.jpg", "텔로메라화장품세트.jpg", "텔로메라화장품세트2.jpg"] 
-            },
-            // --- 바이오케이 ---
-            { 
-                id: 47, category: "바이오케이", title: "케어셀라 바이오케이 200", 
-                mallUrl: "https://vcshop.gcoop.com/kr/display?cate=416&itemNo=5860", 
-                content: "[상품설명]\n지쿱의 바이오 기술력을 응집한 고농축 영양 앰플입니다. 피부 본연의 힘을 기르고 에너지를 채워주어 탄탄하고 건강한 피부 바탕을 만들어 줍니다.\n\n[사용방법]\n1. 얼굴을 깨끗이 세안합니다.\n2. 1회 한 병을 개봉하여 피부에 골고루 펴 바른 후 충분히 흡수시켜 줍니다.\n* 개인의 피부 컨디션에 따라 사용량은 조절 가능합니다.", 
-                ingredients: "[전성분]\n쑥부쟁이캘러스추출물, 글리세린, 다이프로필렌글라이콜, 부틸렌글라이콜, 정제수, 1,2-헥산다이올, 나이아신아마이드, 락토바실러스/콜라겐발효여과물, 알란토인, 인삼캘러스배양추출물, 돌콩피토플라센타추출물, 아데노신, 소듐하이알루로네이트, 펩타이드 컴플렉스 등 상세 성분 이미지 참조", 
-                images: ["바이오케이1.jpg", "바이오케이2.jpg", "바이오케이3.jpg", "바이오케이4.jpg"] 
-            },
-            // --- 케어셀라 뷰티 ---
-            { 
-                id: 42, category: "케어셀라 뷰티", title: "케어셀라 벨벳 커버 비비크림", 
-                mallUrl: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3249", 
-                content: "[상품설명]\n자외선 차단(SPF50+ / PA+++), 미백, 주름개선 3중 기능성 화장품입니다. 내추럴 베이지 컬러가 피부 결점을 자연스럽게 커버하고 벨벳처럼 부드러운 피부 표현을 완성해줍니다.\n\n[사용방법]\n기초 손질의 마지막 단계에서 적당량을 취해 피부 결에 따라 얼굴 전체에 고루 펴 바릅니다. 햇볕 노출이 많은 부위는 두드리듯 꼼꼼히 바릅니다.", 
-                ingredients: "[전성분]\n정제수, 사이클로펜타실록세인, 티타늄디옥사이드, 에칠헥실메톡시신나메이트, 징크옥사이드, 아데노신, 알란토인, 판테놀, 캐모마일꽃추출물, 알부틴 등 상세 성분 이미지 참조", 
-                images: ["비비크림1.jpg", "비비크림2.jpg", "비비크림3.jpg", "비비크림4.jpg"] 
-            },
-            { 
-                id: 41, category: "케어셀라 뷰티", title: "케어셀라 버블톡톡 세럼", 
-                mallUrl: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3197", 
-                content: "[상품설명]\n미세 산소 버블이 피부를 깨우고 유효 성분의 흡수를 도와 탄력 있고 윤기 있는 피부로 가꾸어주는 올인원 세럼입니다. 보르피린과 펩타이드 컴플렉스 함유로 탱탱한 볼륨감과 광채를 부여합니다.\n\n[사용방법]\n적당량을 취해 눈가, 입가, 팔자주름 중심으로 얼굴 전체와 목에 부드럽게 펴 바릅니다. 미세 버블이 생기면 가볍게 두드려 흡수시킵니다.\n* 처음부터 여러 번 문지르면 버블이 생기지 않을 수 있습니다.", 
-                ingredients: "[주요성분]\n보르피린(Volufiline), 돌콩피토플라센타추출물, 히아루론산, 복합 펩타이드, 진세노사이드, 세라마이드, 시어버터 등 상세 성분 이미지 참조", 
-                images: ["버블톡톡1.jpg", "버블톡톡2.jpg", "버블톡톡3.jpg", "버블톡톡4.jpg"] 
-            },
-            { 
-                id: 40, category: "케어셀라 뷰티", title: "케어셀라 매직 필링젤", 
-                mallUrl: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3248", 
-                content: "[상품설명]\n자극 없이 묵은 각질을 제거하여 맑고 투명한 피부결로 가꾸어 주는 고마쥬 타입 저자극 필링젤입니다.\n\n[사용방법]\n1. 물기가 없는 상태에서 적당량을 얼굴에 펴 바르고 1~2분 정도 기다립니다.\n2. 부드럽게 문지르면 스크럽제로 변하며 각질을 제거합니다.\n3. 미온수로 깨끗이 씻어냅니다.\n* 손이나 팔꿈치 등 바디 사용도 가능합니다.", 
-                ingredients: "[전성분]\n정제수, 메틸프로판다이올, 알지닌, 카보머, 하이드롤라이즈드콜라겐, 알로에베라잎즙, 병풀추출물, 녹차추출물 등 상세 정보 이미지 참조", 
-                images: ["필링젤1.jpg", "필링젤2.jpg", "필링젤3.jpg", "필링젤4.jpg"] 
-            },
-            { 
-                id: 39, category: "케어셀라 뷰티", title: "케어셀라 마일드 클렌징 오일", 
-                mallUrl: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3247", 
-                content: "[상품설명]\n11가지 식물성 오일 함유로 메이크업과 노폐물을 자극 없이 부드럽게 세정해주는 마일드 클렌징 오일입니다.\n\n[사용방법]\n1. 물기 없는 손에 적당량을 덜어 얼굴 전체를 마사지합니다.\n2. 약간의 물을 묻혀 오일이 우유빛으로 변할 때까지 러빙한 후 헹궈냅니다.\n3. 잔여물이 남지 않게 충분히 물로 헹궈줍니다.", 
-                ingredients: "[전성분]\n돌콩오일, 올리브오일, 살구씨오일, 아르간커넬오일, 호호바씨오일, 라벤더오일, 바질오일, 녹차추출물 등 상세 정보 이미지 참조", 
-                images: ["클렌징오일1.jpg", "클렌징오일2.jpg", "클렌징오일3.jpg", "클렌징오일4.jpg"] 
-            },
-            { 
-                id: 38, category: "케어셀라 뷰티", title: "케어셀라 바이오케이 애플타민 씨 세럼", 
-                mallUrl: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5477", 
-                content: "[상품설명]\n순수 비타민C 13%와 사과추출물을 함유하여 칙칙한 피부 톤을 맑고 투명하게 케어해주는 고농축 광채 세럼입니다.\n\n[사용방법]\n저녁 기초 스킨케어 시 토너 다음 단계에서 사용합니다.\n* 개봉 후 가급적 2~3개월 이내 사용을 권장합니다.\n* 낮 사용 시 반드시 자외선 차단제를 함께 사용해 주세요.", 
-                ingredients: "[전성분]\n정제수, 프로판다이올, 아스코빅애씨드(13%), 부틸렌글라이콜, 1,2-헥산다이올, 아스코빌글루코사이드, 사과추출물, 글루타티온, 레스베라트롤 등 상세 성분 이미지 참조", 
-                images: ["바이오케이세럼1.jpg", "바이오케이세럼2.jpg", "바이오케이세럼3.jpg", "바이오케이세럼4.jpg"] 
-            },
-            { 
-                id: 34, category: "케어셀라 뷰티", title: "케어셀라 하이드레이션 베이직 세트", 
-                mallUrl: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5680", 
-                content: "[상품설명]\n피부에 촘촘한 수분과 영양을 공급하여 건강하고 촉촉한 피부 베이스를 완성해주는 기초 5종 세트입니다.\n\n[세트 구성]\n1. 폼 클렌저\n2. 밸런스 토너\n3. 인텐시브 세럼\n4. 딥 에멀전\n5. 아쿠아 크림", 
-                ingredients: "각 제품별 전성분 상세 성분 이미지 및 개별 제품 정보를 참조해 주세요.", 
-                images: ["케어셀라1.jpg", "케어셀라2.jpg", "케어셀라3.jpg", "케어셀라4.jpg"] 
-            },
-            { id: 35, category: "케어셀라 뷰티", title: "케어셀라 하이드레이션 폼 클렌저", mallUrl: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5677", content: "부드럽고 깨끗하게 세정해주는 저자극 폼 클렌저입니다.", ingredients: "라우릴베타인, 펩타이드 등", images: ["폼클렌저1.jpg", "폼클렌저2.jpg", "폼클렌저3.jpg", "폼클렌저4.jpg"] },
-            { id: 30, category: "케어셀라 뷰티", title: "케어셀라 하이드레이션 인텐시브 세럼", mallUrl: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5676", content: "피부에 촘촘한 수분과 영양을 공급합니다.", ingredients: "펩타이드 4종 컴플렉스 등", images: ["세럼1.jpg", "세럼2.jpg", "세럼3.jpg", "세럼4.jpg"] },
-            { id: 19, category: "케어셀라 뷰티", title: "케어셀라 하이드레이션 딥 에멀전", mallUrl: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5679", content: "메마른 피부에 풍부한 보습 전달.", ingredients: "인삼캘러스배양추출물 등", images: ["images/에멀전1.jpg", "images/에멀전2.jpg", "images/에멀전3.jpg", "images/에멀전4.jpg"] },
-            { id: 20, category: "케어셀라 뷰티", title: "케어셀라 하이드레이션 밸런스 토너", mallUrl: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5678", content: "피부 결을 정돈하는 수분 토너.", ingredients: "알로에베라잎즙, 판테놀 등", images: ["images/토너1.jpg", "images/토너2.jpg", "images/토너3.jpg", "images/토너4.jpg"] },
-            { id: 21, category: "케어셀라 뷰티", title: "케어셀라 하이드레이션 아쿠아 크림", mallUrl: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5675", content: "오랜 시간 유지되는 수분 보호막.", ingredients: "히알루론산, 세라마이드 등", images: ["images/크림1.jpg", "images/크림2.jpg", "images/크림3.jpg", "images/크림4.jpg"] },
-            { id: 18, category: "케어셀라 뷰티", title: "케어셀라 에코어스노우 유황비누 4EA", mallUrl: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5965", content: "민감 피부를 위한 프리미엄 비누.", ingredients: "법제유황, 올리브오일 등", images: ["images/비누1.jpg", "images/비누2.jpg", "images/비누3.jpg", "images/비누4.jpg"] },
-            // --- 컬러오리진염색약 (제품명 순서 변경) ---
-            { 
-                id: 31, category: "컬러오리진염색약", title: "[다크브라운] 하라힐즈 프로 컬러오리진 4엔비", 
-                mallUrl: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5554", 
-                content: "[상품설명]\n특허 받은 식물성 추출물이 함유되어 두피 보호 및 모발 개선을 돕는 프리미엄 염모제입니다. 선명한 발색과 영양 공급을 동시에 제공합니다.", 
-                ingredients: "식물 유래 특허 성분 함유 상세 정보 이미지 참조", 
-                images: ["염색약다크브라운1.jpg", "염색약다크브라운2.jpg", "염색약다크브라운3.jpg", "염색약다크브라운4.jpg"] 
-            },
-            { 
-                id: 32, category: "컬러오리진염색약", title: "[네츄럴브라운] 하라힐즈 프로 컬러오리진 6엔비", 
-                mallUrl: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5553", 
-                content: "[상품설명]\n자연스러운 갈색빛의 선명한 컬러를 선사하는 식물성 프리미엄 염모제입니다.", 
-                ingredients: "두피 보호 특허 성분 함유 상세 정보 이미지 참조", 
-                images: ["염색제네추럴브라운1.jpg", "염색제네추럴브라운2.jpg", "염색제네추럴브라운3.jpg", "염색제네추럴브라운4.jpg"] 
-            },
-            { 
-                id: 33, category: "컬러오리진염색약", title: "[라이트브라운] 하라힐즈 프로 컬러오리진 8엔비", 
-                mallUrl: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5552", 
-                content: "[상품설명]\n밝고 화사한 브라운 컬러를 선사하는 고품격 식물성 염모제입니다.", 
-                ingredients: "모발 손상 최소화 성분 함유 상세 정보 이미지 참조", 
-                images: ["염색약라이트브라운1.jpg", "염색약라이트브라운2.jpg", "염색약라이트브라운3.jpg", "염색약라이트브라운4.jpg"] 
-            },
-            // --- 리빙 ---
-            { 
-                id: 37, category: "리빙", title: "지쿱 샴푸 & 컨디셔너", 
-                mallUrl: [{ label: "지쿱 샴푸", url: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3714" }, { label: "지쿱 헤어 컨디셔너", url: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3718" }], 
-                content: "[상품설명]\n지쿱 샴푸: 두피와 모발을 부드럽고 깨끗하게 세정해주며 풍부한 영양을 공급합니다.\n지쿱 컨디셔너: 푸석한 모발에 수분과 영양을 채워 찰랑이고 윤기 있는 머릿결을 선사합니다.\n\n[사용방법]\n샴푸: 모발을 충분히 적신 후 거품을 내어 마사지하고 헹궈냅니다.\n컨디셔너: 샴푸 후 적당량을 모발에 도포하여 2~3분 후 헹궈냅니다.", 
-                ingredients: "[전성분]\n지쿱 샴푸: 정제수, 판테놀, 진세노사이드, 펩타이드 복합체 등\n지쿱 컨디셔너: 정제수, 하이드롤라이즈드콜라겐, 실크아미노산 등 상세 정보 이미지 참조", 
-                images: ["지쿱샴푸컨디셔너1.jpg", "지쿱샴푸컨디셔너2.jpg", "지쿱샴푸컨디셔너3.jpg", "지쿱샴푸컨디셔너4.jpg"] 
-            },
-            { 
-                id: 36, category: "리빙", title: "지쿱 바디워시 & 바디로션", 
-                mallUrl: [{ label: "지쿱바디워시", url: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3715" }, { label: "지쿱바디로션", url: "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3716" }], 
-                content: "[상품설명]\n지쿱 바디워시: 조밀한 거품으로 피부 노폐물을 마일드하게 세정합니다.\n지쿱 바디로션: 끈적임 없이 빠르게 흡수되어 피부에 깊은 보습과 윤기를 제공합니다.\n\n[사용방법]\n바디워시: 샤워용 스펀지에 묻혀 거품을 낸 뒤 전신에 마사지하고 헹굽니다.\n바디로션: 샤워 후 물기를 닦고 전신에 부드럽게 펴 발라 흡수시킵니다.", 
-                ingredients: "[전성분]\n바디워시: 정제수, 라우릴글루코사이드, 판테놀 등\n바디로션: 정제수, 호호바씨오일, 시어버터 등 상세 성분 이미지 참조", 
-                images: ["바디워시로션1.jpg", "바디워시로션2.jpg", "바디워시로션3.jpg", "바디워시로션4.jpg"] 
-            },
-            { id: 25, category: "리빙", title: "지쿱 치약", mallUrl: "https://vcshop.gcoop.com/kr/display?cate=8&itemNo=5188", content: "프로폴리스 함유 기능성 치약.", ingredients: "프로폴리스추출물 등", images: ["치약1.jpg", "치약2.jpg", "치약3.jpg", "치약4.jpg"] },
-            { id: 26, category: "리빙", title: "지쿱 화이트 치약", mallUrl: "https://vcshop.gcoop.com/kr/display?cate=8&itemNo=3280", content: "미백 기능성 인증 프리미엄 치약.", ingredients: "피로인산나트륨 등", images: ["화이트치약1.jpg", "화이트치약2.jpg", "화이트치약3.jpg", "화이트치약4.jpg"] },
-            { id: 27, category: "리빙", title: "지쿱 칫솔", mallUrl: "https://vcshop.gcoop.com/kr/display?cate=8&itemNo=3276", content: "이중 미세모와 인체공학적 설계.", ingredients: "금분 함유 칫솔모", images: ["칫솔1.jpg", "칫솔2.jpg", "칫솔3.jpg", "칫솔4.jpg"] }
-        ];
-
-        function App() {
-            const [selectedCategory, setSelectedCategory] = useState("전체보기");
-            const [searchQuery, setSearchQuery] = useState("");
-            const [selectedProduct, setSelectedProduct] = useState(null);
-            const [modalTab, setModalTab] = useState('images');
-            const [toast, setToast] = useState(null);
-            const [previewImage, setPreviewImage] = useState(null);
-
-            const [personalLinks, setPersonalLinks] = useState(() => {
-                const saved = localStorage.getItem('gcoop_personal_links');
-                return saved ? JSON.parse(saved) : {};
-            });
-
-            const [customLinks, setCustomLinks] = useState(() => {
-                const saved = localStorage.getItem('gcoop_custom_links');
-                return saved ? JSON.parse(saved) : [];
-            });
-
-            const GCOOP_MALL_URL = "https://vcshop.gcoop.com/kr";
-
-            useEffect(() => {
-                localStorage.setItem('gcoop_personal_links', JSON.stringify(personalLinks));
-            }, [personalLinks]);
-
-            useEffect(() => {
-                localStorage.setItem('gcoop_custom_links', JSON.stringify(customLinks));
-            }, [customLinks]);
-
-            const filteredProducts = useMemo(() => {
-                return PRODUCTS.filter(p => {
-                    const matchesCategory = selectedCategory === "전체보기" || p.category === selectedCategory;
-                    return matchesCategory && p.title.toLowerCase().includes(searchQuery.toLowerCase());
-                });
-            }, [selectedCategory, searchQuery]);
-
-            const showToast = (msg) => {
-                setToast(msg);
-                setTimeout(() => setToast(null), 2000);
-            };
-
-            const handleSaveLink = (productId, index, name, url) => {
-                if (!url) return;
-                setPersonalLinks(prev => ({
-                    ...prev,
-                    [productId]: {
-                        ...prev[productId],
-                        [`link${index}`]: { name, url }
-                    }
-                }));
-                showToast("링크가 로컬 저장소에 저장되었습니다.");
-            };
-
-            const handleDeleteLink = (productId, index) => {
-                setPersonalLinks(prev => {
-                    const productData = { ...prev[productId] };
-                    delete productData[`link${index}`];
-                    return { ...prev, [productId]: productData };
-                });
-                showToast("링크 정보가 삭제되었습니다.");
-            };
-
-            const handleAddCustomLink = (name, url) => {
-                setCustomLinks(prev => [{ id: Date.now().toString(), name, url, createdAt: Date.now() }, ...prev]);
-                showToast("새 링크가 추가되었습니다.");
-            };
-
-            const handleDeleteCustomLink = (id) => {
-                setCustomLinks(prev => prev.filter(l => l.id !== id));
-                showToast("링크가 삭제되었습니다.");
-            };
-
-            const handleCopy = (text, label) => {
-                const textArea = document.createElement("textarea");
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                showToast(`${label} 복사 완료!`);
-            };
-
-            const handleShare = async (title, url) => {
-                if (navigator.share) {
-                    try { await navigator.share({ title, url }); } catch (e) {}
-                } else {
-                    handleCopy(url, title);
-                }
-            };
-
-            const downloadImg = (src, filename) => {
-                const a = document.createElement('a');
-                const path = (src.startsWith('http') || src.startsWith('images/')) ? src : `images/${src}`;
-                a.href = path;
-                a.download = filename;
-                a.click();
-                showToast("이미지 저장 중...");
-            };
-
-            return (
-                <div className="min-h-screen bg-slate-50 flex flex-col">
-                    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
-                        <div className="flex items-center gap-2 overflow-hidden">
-                            <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-indigo-200 shadow-lg flex-shrink-0">
-                                <Icon name="archive" size={18} />
-                            </div>
-                            <h1 className="text-[13px] font-black text-slate-800 tracking-tighter truncate">
-                                지쿱 제품 이미지 및 성분표, 링크오더 보관소
-                            </h1>
-                        </div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <div className="flex items-center bg-emerald-50 border border-emerald-100 rounded-full p-1 shadow-sm">
-                                <a href={GCOOP_MALL_URL} target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-emerald-700 px-3 py-1 flex items-center gap-1.5 hover:bg-emerald-100 rounded-full transition-all active:scale-95">
-                                    <Icon name="external-link" size={12} /> 지쿱 쇼핑몰 바로가기
-                                </a>
-                                <button onClick={() => handleShare("지쿱 쇼핑몰", GCOOP_MALL_URL)} className="p-1 text-emerald-600 hover:bg-emerald-200 rounded-full transition-colors ml-1">
-                                    <Icon name="share-2" size={14} />
-                                </button>
-                            </div>
-                        </div>
-                    </header>
-
-                    <div className="bg-white border-b sticky top-[65px] sm:top-[65px] z-30 shadow-sm">
-                        <div className="px-4 py-3">
-                            <div className="relative group">
-                                <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                                <input type="text" placeholder="제품명을 검색해 보세요..." className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-transparent border focus:border-indigo-200 focus:bg-white rounded-2xl text-xs outline-none transition-all shadow-inner" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                            </div>
-                        </div>
-                        <div className="flex items-center px-4 overflow-x-auto no-scrollbar pb-3 gap-2">
-                            {CATEGORIES.map(cat => (
-                                <button key={cat} onClick={() => setSelectedCategory(cat)} className={`whitespace-nowrap px-4 py-2 rounded-xl text-[10px] font-bold transition-all border ${selectedCategory === cat ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-100' : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100 active:scale-95'}`}>
-                                    {cat}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <main className="flex-1 p-4 max-w-5xl mx-auto w-full">
-                        {selectedCategory === "기타링크" ? (
-                            <CustomLinkManager customLinks={customLinks} onAdd={handleAddCustomLink} onDelete={handleDeleteCustomLink} onCopy={handleCopy} onShare={handleShare} showToast={showToast} />
-                        ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                {filteredProducts.map(product => (
-                                    <div key={product.id} onClick={() => { setSelectedProduct(product); setModalTab('images'); }} className="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group active:scale-95">
-                                        <OptimizedImage src={product.images[0]} alt={product.title} />
-                                        <div className="p-3">
-                                            <p className="text-[8px] font-black text-indigo-500 uppercase mb-1 tracking-widest leading-none">{product.category}</p>
-                                            <h3 className="font-bold text-[12px] leading-tight text-slate-800 line-clamp-1">{product.title}</h3>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </main>
-
-                    {selectedProduct && (
-                        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4" onClick={() => setSelectedProduct(null)}>
-                            <div className="bg-white w-full max-w-lg rounded-t-[2.5rem] sm:rounded-[3rem] h-[90vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden shadow-2xl relative animate-in slide-in-from-bottom duration-500" onClick={e => e.stopPropagation()}>
-                                <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto my-3 sm:hidden" />
-                                <div className="px-6 py-4 border-b flex items-start justify-between bg-white shrink-0">
-                                    <div className="flex-1">
-                                        <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100 uppercase">{selectedProduct.category}</span>
-                                        <h2 className="text-xl font-black text-slate-900 mt-2 tracking-tight">{selectedProduct.title}</h2>
-                                    </div>
-                                    <button onClick={() => setSelectedProduct(null)} className="p-2.5 bg-slate-100 text-slate-400 rounded-2xl active:scale-90 transition-all"><Icon name="x" size={20} /></button>
-                                </div>
-                                <div className="flex px-6 pt-2 gap-4 border-b shrink-0 overflow-x-auto no-scrollbar bg-white">
-                                    {[{ id: 'images', label: '이미지', icon: 'image' }, { id: 'info', label: '상세/성분', icon: 'file-text' }, { id: 'links', label: '내 링크오더', icon: 'link' }].map(tab => (
-                                        <button key={tab.id} onClick={() => setModalTab(tab.id)} className={`flex items-center gap-1.5 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${modalTab === tab.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400'}`}>
-                                            <Icon name={tab.icon} size={14} /> {tab.label}
-                                        </button>
-                                    ))}
-                                </div>
-                                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-50/30">
-                                    {modalTab === 'images' && (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in duration-300">
-                                            {selectedProduct.images.map((img, idx) => (
-                                                <div key={idx} onClick={() => setPreviewImage(img)} className="relative rounded-3xl overflow-hidden shadow-md border border-slate-200 bg-white cursor-zoom-in group active:scale-[0.98] transition-transform">
-                                                    <OptimizedImage src={img} alt={`image-${idx}`} aspect="aspect-square" />
-                                                    <div className="absolute top-3 left-3 bg-black/30 backdrop-blur-md text-white text-[9px] px-2.5 py-1 rounded-full font-bold">{idx === 0 ? "메인" : `이미지 ${idx+1}`}</div>
-                                                    <button onClick={(e) => { e.stopPropagation(); downloadImg(img, `${selectedProduct.title}_${idx+1}.jpg`); }} className="absolute bottom-3 right-3 p-2.5 bg-white/90 backdrop-blur-sm text-slate-800 rounded-xl shadow-lg active:scale-90 z-10 border border-slate-200">
-                                                        <Icon name="download" size={16} />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                    {modalTab === 'info' && (
-                                        <div className="space-y-6 animate-in fade-in duration-300">
-                                            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
-                                                <h4 className="text-[10px] font-black text-indigo-500 uppercase mb-2 flex items-center gap-1.5"><div className="w-1 h-1 bg-indigo-500 rounded-full" /> Product Description</h4>
-                                                <p className="text-sm text-slate-700 leading-relaxed font-medium whitespace-pre-wrap">{selectedProduct.content}</p>
-                                            </div>
-                                            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
-                                                <h4 className="text-[10px] font-black text-emerald-500 uppercase mb-2 flex items-center gap-1.5"><div className="w-1 h-1 bg-emerald-500 rounded-full" /> Ingredients (주요성분)</h4>
-                                                <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 whitespace-pre-wrap">{selectedProduct.ingredients}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {modalTab === 'links' && (
-                                        <LinkOrderTab 
-                                            product={selectedProduct} 
-                                            personalLinks={personalLinks[selectedProduct.id] || {}} 
-                                            onSave={handleSaveLink} 
-                                            onDelete={handleDeleteLink} 
-                                            onCopy={handleCopy} 
-                                            onShare={handleShare} 
-                                        />
-                                    )}
-                                </div>
-                                <div className="p-4 bg-white border-t safe-bottom">
-                                    <p className="text-[10px] text-slate-400 text-center font-medium">© GCOOP Partner PRO HUB - 로컬 관리 도구</p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {previewImage && (
-                        <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setPreviewImage(null)}>
-                            <button onClick={() => setPreviewImage(null)} className="absolute top-6 right-6 text-white/70 hover:text-white p-2 transition-colors active:scale-90"><Icon name="x" size={32} /></button>
-                            <img src={(previewImage.startsWith('http') || previewImage.startsWith('images/')) ? previewImage : `images/${previewImage}`} className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-300" alt="Expanded view" />
-                            <div className="absolute bottom-10 flex gap-4 w-full justify-center px-6">
-                                <button onClick={(e) => { e.stopPropagation(); downloadImg(previewImage, "지쿱_제품이미지.jpg"); }} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl shadow-xl flex items-center gap-2 text-sm font-black transition-all active:scale-95">
-                                    <Icon name="download" size={18} /> 이미지 원본 저장
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {toast && (
-                        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[110] bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl text-[11px] font-bold animate-in fade-in slide-in-from-bottom-4 duration-300 flex items-center gap-2 border border-white/10">
-                            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse" /> {toast}
-                        </div>
-                    )}
-                </div>
-            );
+  <script id="app-data" type="application/json">{
+  "categories": [
+    "전체보기",
+    "케어셀라 뷰티",
+    "텔로메라화장품",
+    "컬러오리진염색약",
+    "리빙",
+    "바이오케이",
+    "기타링크"
+  ],
+  "products": [
+    {
+      "id": 46,
+      "category": "텔로메라화장품",
+      "title": "텔로메라 크림",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=290&itemNo=5944",
+      "content": "[상품설명]\n피부 시간을 되돌리는 리와인드 크림입니다. 고농축 영양 성분이 피부에 밀착되어 무너진 피부 장벽을 탄탄하게 강화하고 은은한 광채를 선사하는 프리미엄 안티에이징 크림입니다.\n\n[사용방법]\n스킨케어 마지막 단계에서 적당량을 취해 얼굴 전체와 목에 부드럽게 펴 발라 흡수시켜 줍니다.",
+      "ingredients": "[전성분]\n정제수, 글리세린, 부틸렌글라이콜, 카프릴릭/카프릭트라이글리세라이드, 시어버터, 나이아신아마이드, 판테놀, 진세노사이드, 아데노신, 하이드롤라이즈드콜라겐, 식물 유래 줄기세포 배양액 등 상세 정보 이미지 참조",
+      "images": [
+        "텔로메라크림1.jpg",
+        "텔로메라크림2.jpg",
+        "텔로메라크림3.jpg",
+        "텔로메라크림4.jpg"
+      ]
+    },
+    {
+      "id": 45,
+      "category": "텔로메라화장품",
+      "title": "텔로메라 세럼",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=290&itemNo=5941",
+      "content": "[상품설명]\n피부 자생력을 높여주는 텔로메라 루틴의 핵심 세럼입니다. 풍부한 영양 에너지를 피부 깊숙이 전달하여 탄력 있는 피부결과 맑은 피부톤으로 가꾸어 줍니다.\n\n[사용방법]\n부스터 사용 후 적당량을 펌핑하여 얼굴 전체에 골고루 펴 바르고 가볍게 두드려 흡수시킵니다.",
+      "ingredients": "[전성분]\n정제수, 글리세린, 부틸렌글라이콜, 나이아신아마이드, 프로판다이올, 1,2-헥산다이올, 베타인, 세틸에틸헥사노에이트, 스쿠알란, 삼줄기추출물, 삼뿌리추출물, 폴리아크릴레이트크로스폴리머-6, 알란토인, 하이드로제네이티드레시틴 등",
+      "images": [
+        "텔로메라세럼1.jpg",
+        "텔로메라세럼2.jpg",
+        "텔로메라세럼3.jpg",
+        "텔로메라세럼4.jpg"
+      ]
+    },
+    {
+      "id": 44,
+      "category": "텔로메라화장품",
+      "title": "텔로메라 부스터",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=290&itemNo=5943",
+      "content": "[상품설명]\n세안 후 피부 시간을 깨우는 첫 단계 리셋 부스터입니다. 다음 단계 제품의 흡수를 돕는 피부 바탕을 만들어주며 즉각적인 수분과 생기를 부여합니다.\n\n[사용방법]\n세안 직후 적당량을 분사하거나 화장솜에 적셔 피부 결을 따라 가볍게 닦아낸 후 흡수시켜 줍니다.",
+      "ingredients": "[전성분]\n정제수, 부틸렌글라이콜, 나이아신아마이드, 판테놀, 진세노사이드, 아데노신, 하이드롤라이즈드콜라겐 등 상세 정보 이미지 참조",
+      "images": [
+        "텔로메라부스터1.jpg",
+        "텔로메라부스터2.jpg",
+        "텔로메라부스터3.jpg",
+        "텔로메라부스터4.jpg"
+      ]
+    },
+    {
+      "id": 43,
+      "category": "텔로메라화장품",
+      "title": "텔로메라 3종 세트",
+      "mallUrl": [
+        {
+          "label": "텔로메라 3종(3ml) 파우치 세트",
+          "url": "https://vcshop.gcoop.com/kr/display?cate=290&itemNo=5983"
+        },
+        {
+          "label": "텔로메라 3종 화장품 세트",
+          "url": "https://vcshop.gcoop.com/kr/display?cate=290&itemNo=5964"
         }
+      ],
+      "content": "[세트 구성]\n1. 텔로메라 부스터 (120ml / 3ml)\n2. 텔로메라 세럼 (50ml / 3ml)\n3. 텔로메라 크림 (50g / 3g)\n\n[사용방법]\n부스터 -> 세럼 -> 크림 순서로 적당량을 취해 피부에 골고루 펴 바릅니다.",
+      "ingredients": "상세 전성분은 제품별 개별 상세 정보 이미지를 참조해 주세요.",
+      "images": [
+        "텔로메라파우치1.jpg",
+        "텔로메라파우치2.jpg",
+        "텔로메라화장품세트.jpg",
+        "텔로메라화장품세트2.jpg"
+      ]
+    },
+    {
+      "id": 47,
+      "category": "바이오케이",
+      "title": "케어셀라 바이오케이 200",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=416&itemNo=5860",
+      "content": "[상품설명]\n지쿱의 바이오 기술력을 응집한 고농축 영양 앰플입니다. 피부 본연의 힘을 기르고 에너지를 채워주어 탄탄하고 건강한 피부 바탕을 만들어 줍니다.\n\n[사용방법]\n1. 얼굴을 깨끗이 세안합니다.\n2. 1회 한 병을 개봉하여 피부에 골고루 펴 바른 후 충분히 흡수시켜 줍니다.\n* 개인의 피부 컨디션에 따라 사용량은 조절 가능합니다.",
+      "ingredients": "[전성분]\n쑥부쟁이캘러스추출물, 글리세린, 다이프로필렌글라이콜, 부틸렌글라이콜, 정제수, 1,2-헥산다이올, 나이아신아마이드, 락토바실러스/콜라겐발효여과물, 알란토인, 인삼캘러스배양추출물, 돌콩피토플라센타추출물, 아데노신, 소듐하이알루로네이트, 펩타이드 컴플렉스 등 상세 성분 이미지 참조",
+      "images": [
+        "바이오케이1.jpg",
+        "바이오케이2.jpg",
+        "바이오케이3.jpg",
+        "바이오케이4.jpg"
+      ]
+    },
+    {
+      "id": 42,
+      "category": "케어셀라 뷰티",
+      "title": "케어셀라 벨벳 커버 비비크림",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3249",
+      "content": "[상품설명]\n자외선 차단(SPF50+ / PA+++), 미백, 주름개선 3중 기능성 화장품입니다. 내추럴 베이지 컬러가 피부 결점을 자연스럽게 커버하고 벨벳처럼 부드러운 피부 표현을 완성해줍니다.\n\n[사용방법]\n기초 손질의 마지막 단계에서 적당량을 취해 피부 결에 따라 얼굴 전체에 고루 펴 바릅니다. 햇볕 노출이 많은 부위는 두드리듯 꼼꼼히 바릅니다.",
+      "ingredients": "[전성분]\n정제수, 사이클로펜타실록세인, 티타늄디옥사이드, 에칠헥실메톡시신나메이트, 징크옥사이드, 아데노신, 알란토인, 판테놀, 캐모마일꽃추출물, 알부틴 등 상세 성분 이미지 참조",
+      "images": [
+        "비비크림1.jpg",
+        "비비크림2.jpg",
+        "비비크림3.jpg",
+        "비비크림4.jpg"
+      ]
+    },
+    {
+      "id": 41,
+      "category": "케어셀라 뷰티",
+      "title": "케어셀라 버블톡톡 세럼",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3197",
+      "content": "[상품설명]\n미세 산소 버블이 피부를 깨우고 유효 성분의 흡수를 도와 탄력 있고 윤기 있는 피부로 가꾸어주는 올인원 세럼입니다. 보르피린과 펩타이드 컴플렉스 함유로 탱탱한 볼륨감과 광채를 부여합니다.\n\n[사용방법]\n적당량을 취해 눈가, 입가, 팔자주름 중심으로 얼굴 전체와 목에 부드럽게 펴 바릅니다. 미세 버블이 생기면 가볍게 두드려 흡수시킵니다.\n* 처음부터 여러 번 문지르면 버블이 생기지 않을 수 있습니다.",
+      "ingredients": "[주요성분]\n보르피린(Volufiline), 돌콩피토플라센타추출물, 히아루론산, 복합 펩타이드, 진세노사이드, 세라마이드, 시어버터 등 상세 성분 이미지 참조",
+      "images": [
+        "버블톡톡1.jpg",
+        "버블톡톡2.jpg",
+        "버블톡톡3.jpg",
+        "버블톡톡4.jpg"
+      ]
+    },
+    {
+      "id": 40,
+      "category": "케어셀라 뷰티",
+      "title": "케어셀라 매직 필링젤",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3248",
+      "content": "[상품설명]\n자극 없이 묵은 각질을 제거하여 맑고 투명한 피부결로 가꾸어 주는 고마쥬 타입 저자극 필링젤입니다.\n\n[사용방법]\n1. 물기가 없는 상태에서 적당량을 얼굴에 펴 바르고 1~2분 정도 기다립니다.\n2. 부드럽게 문지르면 스크럽제로 변하며 각질을 제거합니다.\n3. 미온수로 깨끗이 씻어냅니다.\n* 손이나 팔꿈치 등 바디 사용도 가능합니다.",
+      "ingredients": "[전성분]\n정제수, 메틸프로판다이올, 알지닌, 카보머, 하이드롤라이즈드콜라겐, 알로에베라잎즙, 병풀추출물, 녹차추출물 등 상세 정보 이미지 참조",
+      "images": [
+        "필링젤1.jpg",
+        "필링젤2.jpg",
+        "필링젤3.jpg",
+        "필링젤4.jpg"
+      ]
+    },
+    {
+      "id": 39,
+      "category": "케어셀라 뷰티",
+      "title": "케어셀라 마일드 클렌징 오일",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3247",
+      "content": "[상품설명]\n11가지 식물성 오일 함유로 메이크업과 노폐물을 자극 없이 부드럽게 세정해주는 마일드 클렌징 오일입니다.\n\n[사용방법]\n1. 물기 없는 손에 적당량을 덜어 얼굴 전체를 마사지합니다.\n2. 약간의 물을 묻혀 오일이 우유빛으로 변할 때까지 러빙한 후 헹궈냅니다.\n3. 잔여물이 남지 않게 충분히 물로 헹궈줍니다.",
+      "ingredients": "[전성분]\n돌콩오일, 올리브오일, 살구씨오일, 아르간커넬오일, 호호바씨오일, 라벤더오일, 바질오일, 녹차추출물 등 상세 정보 이미지 참조",
+      "images": [
+        "클렌징오일1.jpg",
+        "클렌징오일2.jpg",
+        "클렌징오일3.jpg",
+        "클렌징오일4.jpg"
+      ]
+    },
+    {
+      "id": 38,
+      "category": "케어셀라 뷰티",
+      "title": "케어셀라 바이오케이 애플타민 씨 세럼",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5477",
+      "content": "[상품설명]\n순수 비타민C 13%와 사과추출물을 함유하여 칙칙한 피부 톤을 맑고 투명하게 케어해주는 고농축 광채 세럼입니다.\n\n[사용방법]\n저녁 기초 스킨케어 시 토너 다음 단계에서 사용합니다.\n* 개봉 후 가급적 2~3개월 이내 사용을 권장합니다.\n* 낮 사용 시 반드시 자외선 차단제를 함께 사용해 주세요.",
+      "ingredients": "[전성분]\n정제수, 프로판다이올, 아스코빅애씨드(13%), 부틸렌글라이콜, 1,2-헥산다이올, 아스코빌글루코사이드, 사과추출물, 글루타티온, 레스베라트롤 등 상세 성분 이미지 참조",
+      "images": [
+        "바이오케이세럼1.jpg",
+        "바이오케이세럼2.jpg",
+        "바이오케이세럼3.jpg",
+        "바이오케이세럼4.jpg"
+      ]
+    },
+    {
+      "id": 34,
+      "category": "케어셀라 뷰티",
+      "title": "케어셀라 하이드레이션 베이직 세트",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5680",
+      "content": "[상품설명]\n피부에 촘촘한 수분과 영양을 공급하여 건강하고 촉촉한 피부 베이스를 완성해주는 기초 5종 세트입니다.\n\n[세트 구성]\n1. 폼 클렌저\n2. 밸런스 토너\n3. 인텐시브 세럼\n4. 딥 에멀전\n5. 아쿠아 크림",
+      "ingredients": "각 제품별 전성분 상세 성분 이미지 및 개별 제품 정보를 참조해 주세요.",
+      "images": [
+        "케어셀라1.jpg",
+        "케어셀라2.jpg",
+        "케어셀라3.jpg",
+        "케어셀라4.jpg"
+      ]
+    },
+    {
+      "id": 35,
+      "category": "케어셀라 뷰티",
+      "title": "케어셀라 하이드레이션 폼 클렌저",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5677",
+      "content": "부드럽고 깨끗하게 세정해주는 저자극 폼 클렌저입니다.",
+      "ingredients": "라우릴베타인, 펩타이드 등",
+      "images": [
+        "폼클렌저1.jpg",
+        "폼클렌저2.jpg",
+        "폼클렌저3.jpg",
+        "폼클렌저4.jpg"
+      ]
+    },
+    {
+      "id": 30,
+      "category": "케어셀라 뷰티",
+      "title": "케어셀라 하이드레이션 인텐시브 세럼",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5676",
+      "content": "피부에 촘촘한 수분과 영양을 공급합니다.",
+      "ingredients": "펩타이드 4종 컴플렉스 등",
+      "images": [
+        "세럼1.jpg",
+        "세럼2.jpg",
+        "세럼3.jpg",
+        "세럼4.jpg"
+      ]
+    },
+    {
+      "id": 19,
+      "category": "케어셀라 뷰티",
+      "title": "케어셀라 하이드레이션 딥 에멀전",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5679",
+      "content": "메마른 피부에 풍부한 보습 전달.",
+      "ingredients": "인삼캘러스배양추출물 등",
+      "images": [
+        "images/에멀전1.jpg",
+        "images/에멀전2.jpg",
+        "images/에멀전3.jpg",
+        "images/에멀전4.jpg"
+      ]
+    },
+    {
+      "id": 20,
+      "category": "케어셀라 뷰티",
+      "title": "케어셀라 하이드레이션 밸런스 토너",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5678",
+      "content": "피부 결을 정돈하는 수분 토너.",
+      "ingredients": "알로에베라잎즙, 판테놀 등",
+      "images": [
+        "images/토너1.jpg",
+        "images/토너2.jpg",
+        "images/토너3.jpg",
+        "images/토너4.jpg"
+      ]
+    },
+    {
+      "id": 21,
+      "category": "케어셀라 뷰티",
+      "title": "케어셀라 하이드레이션 아쿠아 크림",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5675",
+      "content": "오랜 시간 유지되는 수분 보호막.",
+      "ingredients": "히알루론산, 세라마이드 등",
+      "images": [
+        "images/크림1.jpg",
+        "images/크림2.jpg",
+        "images/크림3.jpg",
+        "images/크림4.jpg"
+      ]
+    },
+    {
+      "id": 18,
+      "category": "케어셀라 뷰티",
+      "title": "케어셀라 에코어스노우 유황비누 4EA",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5965",
+      "content": "민감 피부를 위한 프리미엄 비누.",
+      "ingredients": "법제유황, 올리브오일 등",
+      "images": [
+        "images/비누1.jpg",
+        "images/비누2.jpg",
+        "images/비누3.jpg",
+        "images/비누4.jpg"
+      ]
+    },
+    {
+      "id": 31,
+      "category": "컬러오리진염색약",
+      "title": "[다크브라운] 하라힐즈 프로 컬러오리진 4엔비",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5554",
+      "content": "[상품설명]\n특허 받은 식물성 추출물이 함유되어 두피 보호 및 모발 개선을 돕는 프리미엄 염모제입니다. 선명한 발색과 영양 공급을 동시에 제공합니다.",
+      "ingredients": "식물 유래 특허 성분 함유 상세 정보 이미지 참조",
+      "images": [
+        "염색약다크브라운1.jpg",
+        "염색약다크브라운2.jpg",
+        "염색약다크브라운3.jpg",
+        "염색약다크브라운4.jpg"
+      ]
+    },
+    {
+      "id": 32,
+      "category": "컬러오리진염색약",
+      "title": "[네츄럴브라운] 하라힐즈 프로 컬러오리진 6엔비",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5553",
+      "content": "[상품설명]\n자연스러운 갈색빛의 선명한 컬러를 선사하는 식물성 프리미엄 염모제입니다.",
+      "ingredients": "두피 보호 특허 성분 함유 상세 정보 이미지 참조",
+      "images": [
+        "염색제네추럴브라운1.jpg",
+        "염색제네추럴브라운2.jpg",
+        "염색제네추럴브라운3.jpg",
+        "염색제네추럴브라운4.jpg"
+      ]
+    },
+    {
+      "id": 33,
+      "category": "컬러오리진염색약",
+      "title": "[라이트브라운] 하라힐즈 프로 컬러오리진 8엔비",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=5552",
+      "content": "[상품설명]\n밝고 화사한 브라운 컬러를 선사하는 고품격 식물성 염모제입니다.",
+      "ingredients": "모발 손상 최소화 성분 함유 상세 정보 이미지 참조",
+      "images": [
+        "염색약라이트브라운1.jpg",
+        "염색약라이트브라운2.jpg",
+        "염색약라이트브라운3.jpg",
+        "염색약라이트브라운4.jpg"
+      ]
+    },
+    {
+      "id": 37,
+      "category": "리빙",
+      "title": "지쿱 샴푸 & 컨디셔너",
+      "mallUrl": [
+        {
+          "label": "지쿱 샴푸",
+          "url": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3714"
+        },
+        {
+          "label": "지쿱 헤어 컨디셔너",
+          "url": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3718"
+        }
+      ],
+      "content": "[상품설명]\n지쿱 샴푸: 두피와 모발을 부드럽고 깨끗하게 세정해주며 풍부한 영양을 공급합니다.\n지쿱 컨디셔너: 푸석한 모발에 수분과 영양을 채워 찰랑이고 윤기 있는 머릿결을 선사합니다.\n\n[사용방법]\n샴푸: 모발을 충분히 적신 후 거품을 내어 마사지하고 헹궈냅니다.\n컨디셔너: 샴푸 후 적당량을 모발에 도포하여 2~3분 후 헹궈냅니다.",
+      "ingredients": "[전성분]\n지쿱 샴푸: 정제수, 판테놀, 진세노사이드, 펩타이드 복합체 등\n지쿱 컨디셔너: 정제수, 하이드롤라이즈드콜라겐, 실크아미노산 등 상세 정보 이미지 참조",
+      "images": [
+        "지쿱샴푸컨디셔너1.jpg",
+        "지쿱샴푸컨디셔너2.jpg",
+        "지쿱샴푸컨디셔너3.jpg",
+        "지쿱샴푸컨디셔너4.jpg"
+      ]
+    },
+    {
+      "id": 36,
+      "category": "리빙",
+      "title": "지쿱 바디워시 & 바디로션",
+      "mallUrl": [
+        {
+          "label": "지쿱바디워시",
+          "url": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3715"
+        },
+        {
+          "label": "지쿱바디로션",
+          "url": "https://vcshop.gcoop.com/kr/display?cate=6&itemNo=3716"
+        }
+      ],
+      "content": "[상품설명]\n지쿱 바디워시: 조밀한 거품으로 피부 노폐물을 마일드하게 세정합니다.\n지쿱 바디로션: 끈적임 없이 빠르게 흡수되어 피부에 깊은 보습과 윤기를 제공합니다.\n\n[사용방법]\n바디워시: 샤워용 스펀지에 묻혀 거품을 낸 뒤 전신에 마사지하고 헹굽니다.\n바디로션: 샤워 후 물기를 닦고 전신에 부드럽게 펴 발라 흡수시킵니다.",
+      "ingredients": "[전성분]\n바디워시: 정제수, 라우릴글루코사이드, 판테놀 등\n바디로션: 정제수, 호호바씨오일, 시어버터 등 상세 성분 이미지 참조",
+      "images": [
+        "바디워시로션1.jpg",
+        "바디워시로션2.jpg",
+        "바디워시로션3.jpg",
+        "바디워시로션4.jpg"
+      ]
+    },
+    {
+      "id": 25,
+      "category": "리빙",
+      "title": "지쿱 치약",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=8&itemNo=5188",
+      "content": "프로폴리스 함유 기능성 치약.",
+      "ingredients": "프로폴리스추출물 등",
+      "images": [
+        "치약1.jpg",
+        "치약2.jpg",
+        "치약3.jpg",
+        "치약4.jpg"
+      ]
+    },
+    {
+      "id": 26,
+      "category": "리빙",
+      "title": "지쿱 화이트 치약",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=8&itemNo=3280",
+      "content": "미백 기능성 인증 프리미엄 치약.",
+      "ingredients": "피로인산나트륨 등",
+      "images": [
+        "화이트치약1.jpg",
+        "화이트치약2.jpg",
+        "화이트치약3.jpg",
+        "화이트치약4.jpg"
+      ]
+    },
+    {
+      "id": 27,
+      "category": "리빙",
+      "title": "지쿱 칫솔",
+      "mallUrl": "https://vcshop.gcoop.com/kr/display?cate=8&itemNo=3276",
+      "content": "이중 미세모와 인체공학적 설계.",
+      "ingredients": "금분 함유 칫솔모",
+      "images": [
+        "칫솔1.jpg",
+        "칫솔2.jpg",
+        "칫솔3.jpg",
+        "칫솔4.jpg"
+      ]
+    }
+  ]
+}</script>
+  <script>
+  (() => {
+    'use strict';
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+    const rawData = JSON.parse(document.getElementById('app-data').textContent);
+    const CATEGORIES = rawData.categories;
+    const PRODUCTS = rawData.products;
+    const GCOOP_MALL_URL = 'https://vcshop.gcoop.com/kr';
+
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+    const state = {
+      category: '전체보기',
+      query: '',
+      selectedProduct: null,
+      modalTab: 'images',
+      previewSrc: '',
+      personalLinks: safeParse(localStorage.getItem('gcoop_personal_links_v2'), {}),
+      customLinks: safeParse(localStorage.getItem('gcoop_custom_links_v2'), [])
+    };
+
+    function safeParse(value, fallback) {
+      try { return value ? JSON.parse(value) : fallback; } catch (_) { return fallback; }
+    }
+
+    function persistPersonalLinks() { localStorage.setItem('gcoop_personal_links_v2', JSON.stringify(state.personalLinks)); }
+    function persistCustomLinks() { localStorage.setItem('gcoop_custom_links_v2', JSON.stringify(state.customLinks)); }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>'"]/g, char => ({
+        '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'
+      }[char]));
+    }
+
+    function normalizeUrl(url) {
+      const value = String(url || '').trim();
+      if (!value) return '';
+      if (/^(https?:|mailto:|tel:)/i.test(value)) return value;
+      return 'https://' + value;
+    }
+
+    function imagePath(src) {
+      const value = String(src || '').trim();
+      if (!value) return '';
+      if (/^(https?:|data:|blob:)/i.test(value) || value.startsWith('images/')) return value;
+      return 'images/' + value;
+    }
+
+    function showToast(message) {
+      const toast = $('#toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove('show'), 2100);
+    }
+
+    async function copyText(text, label = '내용') {
+      const value = String(text || '');
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(value);
+        } else {
+          const area = document.createElement('textarea');
+          area.value = value;
+          area.style.position = 'fixed';
+          area.style.left = '-9999px';
+          document.body.appendChild(area);
+          area.focus();
+          area.select();
+          document.execCommand('copy');
+          area.remove();
+        }
+        showToast(label + ' 복사 완료!');
+      } catch (error) {
+        showToast('복사에 실패했습니다. 주소를 직접 선택해 주세요.');
+      }
+    }
+
+    async function shareLink(title, url) {
+      const safeUrl = normalizeUrl(url);
+      if (navigator.share) {
+        try { await navigator.share({ title, url: safeUrl }); return; } catch (_) { return; }
+      }
+      copyText(safeUrl, title || '주소');
+    }
+
+    function downloadImage(src, filename) {
+      const a = document.createElement('a');
+      a.href = imagePath(src);
+      a.download = filename || 'gcoop_image.jpg';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showToast('이미지 저장을 시작했습니다.');
+    }
+
+    function buildThumb(src, alt) {
+      const path = imagePath(src);
+      const wrap = document.createElement('div');
+      wrap.className = 'thumb';
+      wrap.innerHTML = '<div class="skeleton"></div>';
+      const img = document.createElement('img');
+      img.src = path;
+      img.alt = alt || '제품 이미지';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.onload = () => {
+        img.classList.add('loaded');
+        const skeleton = $('.skeleton', wrap);
+        if (skeleton) skeleton.remove();
+      };
+      img.onerror = () => {
+        wrap.innerHTML = '<div class="missing">▧<br>이미지 없음</div>';
+      };
+      wrap.appendChild(img);
+      return wrap;
+    }
+
+    function getFilteredProducts() {
+      const query = state.query.trim().toLowerCase();
+      return PRODUCTS.filter(product => {
+        const categoryOk = state.category === '전체보기' || product.category === state.category;
+        if (!categoryOk) return false;
+        if (!query) return true;
+        const haystack = [product.title, product.category, product.content, product.ingredients].join(' ').toLowerCase();
+        return haystack.includes(query);
+      });
+    }
+
+    function renderCategories() {
+      const tabs = $('#categoryTabs');
+      tabs.innerHTML = '';
+      CATEGORIES.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tab' + (cat === state.category ? ' active' : '');
+        btn.textContent = cat;
+        btn.addEventListener('click', () => {
+          state.category = cat;
+          render();
+        });
+        tabs.appendChild(btn);
+      });
+    }
+
+    function renderProducts() {
+      const grid = $('#productGrid');
+      const panel = $('#customPanel');
+      const meta = $('#mainMeta');
+      grid.innerHTML = '';
+
+      if (state.category === '기타링크') {
+        grid.style.display = 'none';
+        panel.style.display = 'grid';
+        meta.innerHTML = '<span>기타링크 관리자</span><span>내 컴퓨터에만 저장됩니다</span>';
+        renderCustomLinks();
+        return;
+      }
+
+      panel.style.display = 'none';
+      grid.style.display = 'grid';
+      const list = getFilteredProducts();
+      meta.innerHTML = `<span>${escapeHtml(state.category)} · ${list.length}개 제품</span><span>${state.query ? '검색어: ' + escapeHtml(state.query) : '제품 카드를 클릭해 상세 정보를 확인하세요'}</span>`;
+
+      if (!list.length) {
+        grid.innerHTML = '<div class="empty" style="grid-column:1/-1">검색 결과가 없습니다.</div>';
+        return;
+      }
+
+      list.forEach(product => {
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.tabIndex = 0;
+        card.setAttribute('role','button');
+        card.setAttribute('aria-label', product.title + ' 상세 보기');
+        const thumb = buildThumb(product.images?.[0], product.title);
+        card.appendChild(thumb);
+        const body = document.createElement('div');
+        body.className = 'card-body';
+        body.innerHTML = `
+          <p class="category">${escapeHtml(product.category)}</p>
+          <h3 class="card-title">${escapeHtml(product.title)}</h3>
+          <p class="card-desc">${escapeHtml(String(product.content || '').replace(/\[[^\]]+\]/g,'').trim())}</p>`;
+        card.appendChild(body);
+        card.addEventListener('click', () => openModal(product));
+        card.addEventListener('keydown', event => { if (event.key === 'Enter') openModal(product); });
+        grid.appendChild(card);
+      });
+    }
+
+    function renderCustomLinks() {
+      const panel = $('#customPanel');
+      panel.innerHTML = `
+        <div class="box">
+          <h2 class="box-title">＋ 새 커스텀 링크 등록</h2>
+          <div class="form-grid">
+            <input id="customName" class="input" type="text" placeholder="링크 이름 예: 내 블로그, 상담 오픈톡" />
+            <input id="customUrl" class="input" type="text" placeholder="URL 예: https://blog.naver.com/..." />
+            <button id="addCustomBtn" class="btn btn-primary" type="button">💾 링크 추가하기</button>
+          </div>
+        </div>
+        <div id="customList" class="custom-list"></div>`;
+
+      $('#addCustomBtn').addEventListener('click', () => {
+        const name = $('#customName').value.trim();
+        const url = normalizeUrl($('#customUrl').value.trim());
+        if (!name || !url) { showToast('이름과 URL을 모두 입력해 주세요.'); return; }
+        state.customLinks = [{ id: String(Date.now()), name, url, createdAt: Date.now() }, ...state.customLinks];
+        persistCustomLinks();
+        showToast('새 링크가 추가되었습니다.');
+        renderCustomLinks();
+      });
+
+      const list = $('#customList');
+      if (!state.customLinks.length) {
+        list.innerHTML = '<div class="empty">등록된 링크가 없습니다.<br>위에서 새로운 링크를 등록해 보세요.</div>';
+        return;
+      }
+      state.customLinks.forEach(link => {
+        const item = document.createElement('article');
+        item.className = 'custom-item';
+        item.innerHTML = `
+          <div class="custom-head">
+            <div style="min-width:0">
+              <h3 class="custom-name">${escapeHtml(link.name)}</h3>
+              <p class="custom-url">${escapeHtml(link.url)}</p>
+            </div>
+            <button class="btn btn-red custom-delete" type="button" data-id="${escapeHtml(link.id)}">삭제</button>
+          </div>
+          <div class="custom-actions">
+            <a class="btn btn-primary" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">↗ 이동</a>
+            <button class="btn btn-slate custom-copy" type="button">복사</button>
+            <button class="btn btn-blue custom-share" type="button">공유</button>
+          </div>`;
+        $('.custom-copy', item).addEventListener('click', () => copyText(link.url, link.name));
+        $('.custom-share', item).addEventListener('click', () => shareLink(link.name, link.url));
+        $('.custom-delete', item).addEventListener('click', () => {
+          state.customLinks = state.customLinks.filter(value => value.id !== link.id);
+          persistCustomLinks();
+          showToast('링크가 삭제되었습니다.');
+          renderCustomLinks();
+        });
+        list.appendChild(item);
+      });
+    }
+
+    function openModal(product) {
+      state.selectedProduct = product;
+      state.modalTab = 'images';
+      $('#modalCategory').textContent = product.category;
+      $('#modalTitle').textContent = product.title;
+      $('#productModal').classList.add('show');
+      $('#productModal').setAttribute('aria-hidden','false');
+      document.body.classList.add('modal-open');
+      updateModalTabs();
+      renderModalContent();
+    }
+
+    function closeModal() {
+      $('#productModal').classList.remove('show');
+      $('#productModal').setAttribute('aria-hidden','true');
+      document.body.classList.remove('modal-open');
+      state.selectedProduct = null;
+    }
+
+    function updateModalTabs() {
+      $$('.modal-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.modalTab === state.modalTab));
+    }
+
+    function renderModalContent() {
+      const product = state.selectedProduct;
+      const content = $('#modalContent');
+      if (!product) return;
+      if (state.modalTab === 'images') renderImagesTab(product, content);
+      if (state.modalTab === 'info') renderInfoTab(product, content);
+      if (state.modalTab === 'links') renderLinksTab(product, content);
+    }
+
+    function renderImagesTab(product, content) {
+      content.innerHTML = '<div class="image-grid"></div>';
+      const grid = $('.image-grid', content);
+      (product.images || []).forEach((src, index) => {
+        const card = document.createElement('div');
+        card.className = 'img-card';
+        card.appendChild(buildThumb(src, product.title + ' 이미지 ' + (index + 1)));
+        const badge = document.createElement('div');
+        badge.className = 'badge';
+        badge.textContent = index === 0 ? '메인' : '이미지 ' + (index + 1);
+        const down = document.createElement('button');
+        down.type = 'button';
+        down.className = 'download';
+        down.textContent = '⬇';
+        down.addEventListener('click', event => {
+          event.stopPropagation();
+          downloadImage(src, `${product.title}_${index + 1}.jpg`);
+        });
+        card.appendChild(badge);
+        card.appendChild(down);
+        card.addEventListener('click', () => openPreview(src));
+        grid.appendChild(card);
+      });
+    }
+
+    function renderInfoTab(product, content) {
+      content.innerHTML = `
+        <section class="info-card">
+          <h3 class="info-kicker"><span class="dot"></span> Product Description</h3>
+          <p class="info-text">${escapeHtml(product.content || '상품 설명이 없습니다.')}</p>
+        </section>
+        <section class="info-card">
+          <h3 class="info-kicker" style="color:#059669"><span class="dot"></span> Ingredients / 주요 성분</h3>
+          <div class="ingredients">${escapeHtml(product.ingredients || '상세 이미지의 성분표를 참고해 주세요.')}</div>
+        </section>
+        <p style="text-align:center;color:#94a3b8;font-size:11px;font-weight:800;margin:14px 0 0">※ 자세한 전성분과 주의사항은 제품 상세 이미지와 공식몰을 함께 확인해 주세요.</p>`;
+    }
+
+    function getMallLinks(product) {
+      if (Array.isArray(product.mallUrl)) return product.mallUrl;
+      if (product.mallUrl) return [{ label:'쇼핑몰 상세페이지', url: product.mallUrl }];
+      return [];
+    }
+
+    function renderLinksTab(product, content) {
+      const productLinks = state.personalLinks[product.id] || {};
+      const mallLinks = getMallLinks(product);
+      content.innerHTML = `
+        <div class="links-note">ⓘ 파트너님의 마이오피스 링크나 블로그 주소를 등록해 보세요.<br>등록 내용은 현재 브라우저의 로컬 저장소에 저장됩니다.</div>
+        <div id="mallLinks"></div>
+        <div class="divider"></div>
+        <div id="personalLinkList"></div>`;
+
+      const mallBox = $('#mallLinks', content);
+      if (!mallLinks.length) {
+        mallBox.innerHTML = '<div class="mall-link"><p class="mall-title">공식몰 링크 없음</p></div>';
+      } else {
+        mallLinks.forEach(link => {
+          const safeUrl = normalizeUrl(link.url);
+          const block = document.createElement('div');
+          block.className = 'mall-link';
+          block.innerHTML = `
+            <h4 class="mall-title">🛍 ${escapeHtml(link.label || '쇼핑몰 상세페이지')} (클릭시 이동)</h4>
+            <a class="mall-url" href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(safeUrl)}</a>
+            <div class="row-actions">
+              <button class="btn btn-slate copy-mall" type="button">복사하기</button>
+              <button class="btn btn-primary share-mall" type="button">공유하기</button>
+            </div>`;
+          $('.copy-mall', block).addEventListener('click', () => copyText(safeUrl, link.label || '상세페이지 주소'));
+          $('.share-mall', block).addEventListener('click', () => shareLink(link.label || '상세페이지', safeUrl));
+          mallBox.appendChild(block);
+        });
+      }
+
+      const list = $('#personalLinkList', content);
+      [1,2,3,4].forEach(num => {
+        const key = 'link' + num;
+        const saved = productLinks[key];
+        const item = document.createElement('div');
+        item.className = 'link-item';
+        if (saved && saved.url) {
+          const safeUrl = normalizeUrl(saved.url);
+          item.innerHTML = `
+            <div class="link-item-head"><span class="num">${num}</span><input class="input" value="${escapeHtml(saved.name || '링크 ' + num)}" disabled /></div>
+            <input class="input" value="${escapeHtml(safeUrl)}" disabled />
+            <div class="link-actions">
+              <a class="btn btn-primary wide" href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer">↗ 링크로 이동</a>
+              <button class="btn btn-slate copy-personal" type="button">복사</button>
+              <button class="btn btn-blue share-personal" type="button">공유</button>
+              <button class="btn btn-red wide delete-personal" type="button">삭제 및 재등록</button>
+            </div>`;
+          $('.copy-personal', item).addEventListener('click', () => copyText(safeUrl, saved.name || '링크'));
+          $('.share-personal', item).addEventListener('click', () => shareLink(saved.name || '링크', safeUrl));
+          $('.delete-personal', item).addEventListener('click', () => {
+            const next = { ...(state.personalLinks[product.id] || {}) };
+            delete next[key];
+            state.personalLinks[product.id] = next;
+            persistPersonalLinks();
+            showToast('링크 정보가 삭제되었습니다.');
+            renderLinksTab(product, content);
+          });
+        } else {
+          item.innerHTML = `
+            <div class="link-item-head"><span class="num">${num}</span><input class="input link-name" type="text" placeholder="링크 ${num} 이름" value="링크 ${num}" /></div>
+            <input class="input link-url" type="text" placeholder="마케팅 URL 예: https://..." />
+            <div class="link-actions"><button class="btn btn-primary wide save-personal" type="button">＋ 새 링크 등록하기</button></div>`;
+          $('.save-personal', item).addEventListener('click', () => {
+            const name = $('.link-name', item).value.trim() || '링크 ' + num;
+            const url = normalizeUrl($('.link-url', item).value.trim());
+            if (!url) { showToast('URL을 입력해 주세요.'); return; }
+            state.personalLinks[product.id] = { ...(state.personalLinks[product.id] || {}), [key]: { name, url } };
+            persistPersonalLinks();
+            showToast('링크가 로컬 저장소에 저장되었습니다.');
+            renderLinksTab(product, content);
+          });
+        }
+        list.appendChild(item);
+      });
+    }
+
+    function openPreview(src) {
+      state.previewSrc = src;
+      $('#previewImg').src = imagePath(src);
+      $('#imagePreview').classList.add('show');
+      $('#imagePreview').setAttribute('aria-hidden','false');
+      document.body.classList.add('modal-open');
+    }
+
+    function closePreview() {
+      $('#imagePreview').classList.remove('show');
+      $('#imagePreview').setAttribute('aria-hidden','true');
+      $('#previewImg').src = '';
+      state.previewSrc = '';
+      if (!state.selectedProduct) document.body.classList.remove('modal-open');
+    }
+
+    function bindEvents() {
+      $('#searchInput').addEventListener('input', event => {
+        state.query = event.target.value;
+        $('#clearSearchBtn').classList.toggle('show', !!state.query);
+        renderProducts();
+      });
+      $('#clearSearchBtn').addEventListener('click', () => {
+        state.query = '';
+        $('#searchInput').value = '';
+        $('#clearSearchBtn').classList.remove('show');
+        renderProducts();
+      });
+      $('#shareMallBtn').addEventListener('click', () => shareLink('지쿱 쇼핑몰', GCOOP_MALL_URL));
+      $('#modalCloseBtn').addEventListener('click', closeModal);
+      $('#productModal').addEventListener('click', event => { if (event.target.id === 'productModal') closeModal(); });
+      $$('.modal-tab').forEach(tab => tab.addEventListener('click', () => {
+        state.modalTab = tab.dataset.modalTab;
+        updateModalTabs();
+        renderModalContent();
+      }));
+      $('#previewCloseBtn').addEventListener('click', closePreview);
+      $('#imagePreview').addEventListener('click', event => { if (event.target.id === 'imagePreview') closePreview(); });
+      $('#previewSaveBtn').addEventListener('click', event => {
+        event.stopPropagation();
+        downloadImage(state.previewSrc, '지쿱_제품이미지.jpg');
+      });
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+          if ($('#imagePreview').classList.contains('show')) closePreview();
+          else if ($('#productModal').classList.contains('show')) closeModal();
+        }
+      });
+    }
+
+    function render() {
+      renderCategories();
+      renderProducts();
+    }
+
+    bindEvents();
+    render();
+  })();
+  </script>
 </body>
 </html>
